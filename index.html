@@ -47,6 +47,12 @@
         <span class="badge">שחקו עכשיו</span>
       </button>
 
+      <button class="game-card pressable" data-game="hachlata" type="button">
+        <h3>החלטה נכונה?</h3>
+        <p>מצבים מהחיים של עסק: כן, לא או תלוי? עם עזרה מה-AI</p>
+        <span class="badge">שחקו עכשיו</span>
+      </button>
+
       <button class="game-card pressable" data-game="game4" type="button">
         <h3>משחק 4</h3>
         <p>ייבנה בשלב הבא</p>
@@ -98,6 +104,10 @@
 
       document.querySelector('[data-game="rivchi"]').addEventListener("click", function () {
         window.location.href = "games/03-rivchi.html";
+      });
+
+      document.querySelector('[data-game="hachlata"]').addEventListener("click", function () {
+        window.location.href = "games/04-hachlata.html";
       });
 
       ["game1", "game4", "game5"].forEach(function (id) {

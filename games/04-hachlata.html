@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>החלטה נכונה? - שיעור 1</title>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/logo.png">
+<style>
+  /* עיצוב ייעודי למשחק "החלטה נכונה?" בלבד - נשען על assets/style.css */
+  .hc-card {
+    background: var(--bg-gray);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border-inline-start: 4px solid var(--navy-light);
+  }
+  .hc-card.decision { border-inline-start-color: var(--gold); background: #FBF8EE; }
+  .hc-label { display: block; font-size: 13px; font-weight: 700; color: var(--navy-light); margin-bottom: 4px; }
+  .hc-card.decision .hc-label { color: #8A6D12; }
+  .hc-text { font-size: 17px; color: var(--navy-deep); margin: 0; line-height: 1.6; }
+  .hc-question { font-weight: 700; color: var(--navy-deep); font-size: 18px; margin: 4px 0 12px; }
+  .hc-choices { display: flex; gap: 10px; margin-bottom: 14px; }
+  .hc-choice {
+    flex: 1 1 0; min-height: 56px; font-size: 19px; font-weight: 700;
+    border-radius: var(--radius); border: 2px solid var(--navy-light);
+    background: var(--white); color: var(--navy-deep);
+  }
+  .hc-choice:hover { background: var(--bg-gray); }
+  .hc-choice.is-correct { background: var(--green-success); border-color: var(--green-success); color: var(--white); }
+  .hc-choice.is-wrong { background: var(--white); border-color: var(--red-error); color: var(--red-error); }
+  .hc-choice:disabled { cursor: default; }
+  .hc-explain p { margin: 0 0 6px; }
+  .hc-explain p:last-child { margin-bottom: 0; }
+  .hc-ai { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; margin-bottom: 12px; }
+  .hc-ai-note { font-size: 12px; color: var(--navy-deep); opacity: 0.65; margin: -6px 0 14px; }
+  .hc-topic { margin-inline-start: 6px; }
+  .hc-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .hc-summary-row { display: flex; justify-content: space-between; background: var(--bg-gray); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 8px; font-weight: 600; color: var(--navy-deep); }
+  .hc-review-q { font-weight: 600; margin-bottom: 4px; }
+  .hc-ok { color: var(--green-success); font-weight: 700; }
+  .hc-bad { color: var(--red-error); font-weight: 700; }
+  @media (max-width: 420px) {
+    .hc-text { font-size: 16px; }
+    .hc-choice { font-size: 18px; min-height: 54px; }
+  }
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <img src="../assets/logo.png" alt="לוגו" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+    <strong id="logo-fallback" class="logo-fallback" style="display:none;">משחקי לימוד</strong>
+    <a href="../index.html" class="home-link" style="margin-inline-start:auto;font-weight:600;color:inherit;text-decoration:none;white-space:nowrap;">חזרה למשחקים</a>
+  </header>
+
+  <div class="game-shell" id="hc-game"></div>
+
+  <script src="../data/04-hachlata.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var DATA = window.HACHLATA_GAME_DATA;
+    var TOTAL_SCORE_KEY = "learnGames_totalScore";
+    var POINTS_CORRECT = 10;
+    var SPEED_BONUS_MAX = 5;
+    var SPEED_BONUS_WINDOW_MS = 30000; // זמן קריאה סביר לשאלה מילולית
+    var MAX_POINTS = DATA.questions.length * (POINTS_CORRECT + SPEED_BONUS_MAX);
+
+    var root = document.getElementById("hc-game");
+    var labels = {};
+    DATA.choices.forEach(function (c) { labels[c.id] = c.label; });
+
+    var state;
+    function resetState() {
+      state = { index: 0, score: 0, correctCount: 0, results: [], startedAt: 0, answered: null, scoreSaved: false };
+    }
+    resetState();
+
+    function el(tag, className, text) {
+      var n = document.createElement(tag);
+      if (className) { n.className = className; }
+      if (text !== undefined) { n.textContent = text; }
+      return n;
+    }
+    function clear() { root.innerHTML = ""; }
+    function screen() { var s = el("div", "screen"); root.appendChild(s); return s; }
+
+    function progressBar(fraction) {
+      var track = el("div", "top-progress");
+      var fill = el("div", "top-progress-fill");
+      fill.style.width = Math.round(Math.max(0, Math.min(1, fraction)) * 100) + "%";
+      track.appendChild(fill);
+      return track;
+    }
+
+    function aiUrl(q) {
+      var prompt =
+        "אני משתתף/ת בשיעור ראשון בניתוח דוחות כספיים, ואני לא מתחום הכספים. " +
+        "המצב: " + q.situation + " " +
+        "ההחלטה שהתקבלה: " + q.decision + " " +
+        "האם ההחלטה נכונה מבחינה חשבונאית? ענה קודם במילה אחת: כן, לא או תלוי. " +
+        "אחר כך הסבר בעברית פשוטה, בשלושה משפטים לכל היותר. אם התשובה היא תלוי, כתוב במה זה תלוי.";
+      return "https://chatgpt.com/?q=" + encodeURIComponent(prompt);
+    }
+
+    function aiButton(q, text) {
+      var a = el("a", "btn btn-secondary pressable hc-ai", text);
+      a.href = aiUrl(q);
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.setAttribute("data-ai", q.id);
+      return a;
+    }
+
+    // ----- מסך פתיחה -----
+    function renderIntro() {
+      clear();
+      var s = screen();
+      s.appendChild(el("h2", null, DATA.title));
+      s.appendChild(el("p", "screen-subtitle", DATA.subtitle));
+      var tag = el("span", "level-tag", "שאלות: " + DATA.questions.length);
+      s.appendChild(tag);
+      var how = el("ul", "missed-list");
+      [
+        "בכל שאלה יש מצב קצר מעסק, והחלטה שמישהו קיבל.",
+        "ענו: האם ההחלטה נכונה? כן, לא או תלוי. יש תשובה אחת לכל שאלה.",
+        "תשובה נכונה שווה 10 נקודות, ועוד עד 5 נקודות בונוס על מהירות. על טעות לא מקבלים נקודות, אבל מקבלים הסבר.",
+        "רוצים עזרה? הכפתור ״שאלו את ה-AI״ פותח את ChatGPT עם השאלה מוכנה. זה לא חובה, והשעון ממשיך לרוץ."
+      ].forEach(function (t) { how.appendChild(el("li", null, t)); });
+      s.appendChild(how);
+      var start = el("button", "btn btn-primary pressable", "התחילו");
+      start.type = "button";
+      start.addEventListener("click", function () { startQuestion(0); });
+      s.appendChild(start);
+    }
+
+    // ----- שאלה -----
+    function startQuestion(i) {
+      state.index = i;
+      state.answered = null;
+      state.startedAt = Date.now();
+      renderQuestion();
+      window.scrollTo(0, 0);
+    }
+
+    function renderQuestion() {
+      clear();
+      var q = DATA.questions[state.index];
+      var s = screen();
+      s.appendChild(progressBar(state.index / DATA.questions.length));
+
+      var row = el("div", "hc-row");
+      row.appendChild(el("span", "level-tag", "שאלה " + (state.index + 1) + " מתוך " + DATA.questions.length));
+      row.appendChild(el("span", "level-tag hc-topic", q.topic));
+      s.appendChild(row);
+      s.appendChild(el("div", "score-line", "ניקוד: " + state.score));
+
+      var sit = el("div", "hc-card");
+      sit.appendChild(el("span", "hc-label", "המצב"));
+      sit.appendChild(el("p", "hc-text", q.situation));
+      s.appendChild(sit);
+
+      var dec = el("div", "hc-card decision");
+      dec.appendChild(el("span", "hc-label", "ההחלטה"));
+      dec.appendChild(el("p", "hc-text", q.decision));
+      s.appendChild(dec);
+
+      s.appendChild(el("p", "hc-question", "האם ההחלטה נכונה?"));
+
+      var choices = el("div", "hc-choices");
+      DATA.choices.forEach(function (c) {
+        var b = el("button", "hc-choice pressable", c.label);
+        b.type = "button";
+        b.setAttribute("data-choice", c.id);
+        if (state.answered) {
+          b.disabled = true;
+          if (c.id === q.answer) { b.className += " is-correct"; }
+          else if (c.id === state.answered.choice) { b.className += " is-wrong"; }
+        } else {
+          b.addEventListener("click", function () { answer(c.id); });
+        }
+        choices.appendChild(b);
+      });
+      s.appendChild(choices);
+
+      if (!state.answered) {
+        s.appendChild(aiButton(q, "🤖 שאלו את ה-AI"));
+        s.appendChild(el("p", "hc-ai-note", "ייפתח ChatGPT בלשונית חדשה, עם השאלה מוכנה. ה-AI הוא כלי עזר להחלטה: בדקו אם ההסבר שלו משכנע אתכם."));
+        return;
+      }
+
+      var fb = el("div", "feedback-box " + (state.answered.correct ? "correct" : "wrong") + " hc-explain");
+      var head = state.answered.correct
+        ? "נכון! קיבלת " + state.answered.points + " נקודות. התשובה: " + labels[q.answer] + "."
+        : "לא בדיוק. התשובה הנכונה: " + labels[q.answer] + ".";
+      fb.appendChild(el("p", null, head));
+      q.explain.forEach(function (line) { fb.appendChild(el("p", null, line)); });
+      s.appendChild(fb);
+
+      var actions = el("div", "screen-actions hc-row");
+      var last = state.index >= DATA.questions.length - 1;
+      var next = el("button", "btn btn-primary pressable", last ? "לתוצאות" : "לשאלה הבאה");
+      next.type = "button";
+      next.addEventListener("click", function () {
+        if (last) { renderEnd(); } else { startQuestion(state.index + 1); }
+      });
+      actions.appendChild(next);
+      actions.appendChild(aiButton(q, "🤖 מה ה-AI אומר?"));
+      s.appendChild(actions);
+    }
+
+    function speedBonus() {
+      var ratio = 1 - (Date.now() - state.startedAt) / SPEED_BONUS_WINDOW_MS;
+      return Math.max(0, Math.min(SPEED_BONUS_MAX, Math.round(SPEED_BONUS_MAX * ratio)));
+    }
+
+    function answer(choiceId) {
+      if (state.answered) { return; }
+      var q = DATA.questions[state.index];
+      var correct = choiceId === q.answer;
+      var points = correct ? POINTS_CORRECT + speedBonus() : 0;
+      state.score += points;
+      if (correct) { state.correctCount++; }
+      state.answered = { choice: choiceId, correct: correct, points: points };
+      state.results.push({ q: q, choice: choiceId, correct: correct });
+      renderQuestion();
+    }
+
+    // ----- מסך סיום -----
+    function finalPercent() {
+      return Math.round((state.score / MAX_POINTS) * 100);
+    }
+
+    function saveCumulative() {
+      if (state.scoreSaved) { return; }
+      state.scoreSaved = true;
+      try {
+        var cur = parseInt(localStorage.getItem(TOTAL_SCORE_KEY) || "0", 10);
+        if (isNaN(cur)) { cur = 0; }
+        localStorage.setItem(TOTAL_SCORE_KEY, String(cur + state.score));
+      } catch (e) { /* localStorage לא זמין; מתעלמים בשקט */ }
+    }
+
+    function formUrl(score) {
+      var f = DATA.formSubmit;
+      return f.viewUrl + "?usp=pp_url&" +
+        f.fields.game + "=" + encodeURIComponent(DATA.title) + "&" +
+        f.fields.score + "=" + encodeURIComponent(String(score));
+    }
+
+    function renderEnd() {
+      saveCumulative();
+      clear();
+      var s = screen();
+      s.appendChild(progressBar(1));
+      s.appendChild(el("h2", null, "סיימתם את המשחק!"));
+      var pct = finalPercent();
+      s.appendChild(el("div", "hc-summary-row", "תשובות נכונות: " + state.correctCount + " מתוך " + DATA.questions.length));
+      s.appendChild(el("div", "hc-summary-row", "ניקוד (כולל בונוס מהירות): " + state.score + " מתוך " + MAX_POINTS));
+      s.appendChild(el("div", "score-line", "הציון שלך: " + pct + " / 100"));
+
+      var wrong = state.results.filter(function (r) { return !r.correct; });
+      if (wrong.length) {
+        s.appendChild(el("p", "screen-subtitle", "הדברים שהכי כדאי לחזור עליהם:"));
+        var list = el("ul", "missed-list");
+        wrong.forEach(function (r) {
+          var li = el("li");
+          li.appendChild(el("div", "hc-review-q", r.q.decision));
+          li.appendChild(el("div", "hc-bad", "התשובה הנכונה: " + labels[r.q.answer]));
+          li.appendChild(el("div", null, r.q.explain[0]));
+          list.appendChild(li);
+        });
+        s.appendChild(list);
+      } else {
+        s.appendChild(el("p", "hc-ok", "מושלם! כל ההחלטות נבדקו נכון."));
+      }
+
+      s.appendChild(el("p", "screen-subtitle",
+        "כדי שהציון יירשם ברשימת הכיתה: לחצו ״שלח את התוצאה״, מלאו בטופס שם מלא ואימייל, ולחצו ״שליחה״."));
+
+      var actions = el("div", "screen-actions hc-row");
+      var url = formUrl(pct);
+      var submit = el("button", "btn btn-primary pressable", "שלח את התוצאה");
+      submit.type = "button";
+      submit.addEventListener("click", function () {
+        window.open(url, "_blank");
+        if (!actions.querySelector(".hc-manual-link")) {
+          var manual = el("a", "btn btn-secondary pressable hc-manual-link", "הטופס לא נפתח? לחצו כאן");
+          manual.href = url;
+          manual.target = "_blank";
+          manual.rel = "noopener";
+          actions.appendChild(manual);
+        }
+      });
+      actions.appendChild(submit);
+      var again = el("button", "btn btn-secondary pressable", "שחקו שוב");
+      again.type = "button";
+      again.addEventListener("click", function () { resetState(); startQuestion(0); });
+      actions.appendChild(again);
+      s.appendChild(actions);
+    }
+
+    renderIntro();
+  })();
+  </script>
+</body>
+</html>
