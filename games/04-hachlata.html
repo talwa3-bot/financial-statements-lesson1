@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>החלטה נכונה? - שיעור 1</title>
+<title>החלטה נכונה? - משחק 4</title>
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/logo.png">
 <style>
@@ -118,6 +118,7 @@
     function renderIntro() {
       clear();
       var s = screen();
+      if (DATA.label) { s.appendChild(el("span", "level-tag", DATA.label)); }
       s.appendChild(el("h2", null, DATA.title));
       s.appendChild(el("p", "screen-subtitle", DATA.subtitle));
       var tag = el("span", "level-tag", "שאלות: " + DATA.questions.length);
