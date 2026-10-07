@@ -30,39 +30,27 @@
 
     <section class="games-grid">
       <button class="game-card pressable" data-game="maazan" type="button">
-        <h3>שבץ את המאזן</h3>
-        <p>מפגש 2 - סיווג סעיפי מאזן, כולל מבחן מסכם</p>
+        <h3>משחק 1: שבץ את המאזן</h3>
+        <p>מאזן - סיווג סעיפי מאזן, כולל מבחן מסכם</p>
         <span class="badge">שחקו עכשיו</span>
       </button>
 
-      <button class="game-card pressable" data-game="game1" type="button">
-        <h3>משחק 1</h3>
-        <p>ייבנה בשלב הבא</p>
-        <span class="badge">בקרוב</span>
+      <button class="game-card pressable" data-game="rivchi" type="button">
+        <h3>משחק 2: רווחיות</h3>
+        <p>רווח והפסד - בניית הדוח, חישוב מס וסיווג כרטסות, כולל מבחן מסכם</p>
+        <span class="badge">שחקו עכשיו</span>
       </button>
 
-      <button class="game-card pressable" data-game="rivchi" type="button">
-        <h3>רווחיות</h3>
-        <p>מפגש 3 - דוח רווח והפסד, חישוב מס וסיווג כרטסות, כולל מבחן מסכם</p>
+      <button class="game-card pressable" data-game="tazrim" type="button">
+        <h3>משחק 3: תזרים מזומנים</h3>
+        <p>יש רווח, אבל איפה הכסף? שלושת חלקי התזרים והחלטה ליולי</p>
         <span class="badge">שחקו עכשיו</span>
       </button>
 
       <button class="game-card pressable" data-game="hachlata" type="button">
-        <h3>החלטה נכונה?</h3>
-        <p>מצבים מהחיים של עסק: כן, לא או תלוי? עם עזרה מה-AI</p>
+        <h3>משחק 4: החלטה נכונה?</h3>
+        <p>משחק ההחלטות העסקיות: כן, לא או תלוי? מסכם את שלושת הדוחות, עם עזרה מה-AI</p>
         <span class="badge">שחקו עכשיו</span>
-      </button>
-
-      <button class="game-card pressable" data-game="game4" type="button">
-        <h3>משחק 4</h3>
-        <p>ייבנה בשלב הבא</p>
-        <span class="badge">בקרוב</span>
-      </button>
-
-      <button class="game-card pressable" data-game="game5" type="button">
-        <h3>משחק 5</h3>
-        <p>ייבנה בשלב הבא</p>
-        <span class="badge">בקרוב</span>
       </button>
     </section>
   </main>
@@ -106,15 +94,14 @@
         window.location.href = "games/03-rivchi.html";
       });
 
+      document.querySelector('[data-game="tazrim"]').addEventListener("click", function () {
+        window.location.href = "games/05-tazrim.html";
+      });
+
       document.querySelector('[data-game="hachlata"]').addEventListener("click", function () {
         window.location.href = "games/04-hachlata.html";
       });
 
-      ["game1", "game4", "game5"].forEach(function (id) {
-        document.querySelector('[data-game="' + id + '"]').addEventListener("click", function () {
-          alert("המשחק בבנייה - חזרו בקרוב!");
-        });
-      });
     })();
   </script>
 </body>
