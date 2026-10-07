@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>שבץ את המאזן - מפגש 2</title>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/logo.png">
+<style>
+  /* עיצוב ייעודי לפאנל משוואת המאזן - שייך למשחק הזה בלבד, לא נוגע ב-engine.js */
+  .maazan-equation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 720px;
+    margin: 12px auto 0;
+    padding: 14px;
+    border-radius: 8px;
+    background: var(--bg-gray);
+  }
+
+  .eq-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 150px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 2px solid var(--navy-light);
+    transition: border-color 200ms ease, color 200ms ease;
+  }
+
+  .eq-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy-deep);
+  }
+
+  .eq-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy-deep);
+    transition: color 200ms ease;
+  }
+
+  .eq-sign {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy-deep);
+  }
+
+  .maazan-equation.balanced .eq-side {
+    border-color: var(--gold);
+  }
+
+  .maazan-equation.balanced .eq-value {
+    color: var(--gold);
+  }
+
+  .maazan-equation.unbalanced .eq-side {
+    border-color: var(--red-error);
+  }
+
+  .maazan-equation.unbalanced .eq-value {
+    color: var(--red-error);
+  }
+
+  .eq-note {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: var(--navy-deep);
+    opacity: 0.65;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <img src="../assets/logo.png" alt="לוגו" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+    <strong id="logo-fallback" class="logo-fallback" style="display:none;">משחקי לימוד</strong>
+    <a href="../index.html" class="home-link" style="margin-inline-start:auto;font-weight:600;color:inherit;text-decoration:none;white-space:nowrap;">חזרה למשחקים</a>
+  </header>
+
+  <section class="maazan-equation" id="maazan-equation" aria-live="polite">
+    <div class="eq-side">
+      <span class="eq-label">נכסים</span>
+      <span class="eq-value" id="eq-assets-value">0 אלפי ₪</span>
+    </div>
+    <span class="eq-sign">=</span>
+    <div class="eq-side">
+      <span class="eq-label">התחייבויות + הון עצמי</span>
+      <span class="eq-value" id="eq-liab-value">0 אלפי ₪</span>
+    </div>
+    <p class="eq-note">הסכומים באלפי ש"ח, לצורכי תרגול בלבד</p>
+  </section>
+
+  <div class="game-shell" id="maazan-game"></div>
+
+  <script src="../assets/engine.js"></script>
+  <script src="../data/02-maazan.js"></script>
+  <script>
+    (function () {
+      var GAME_DATA = window.MAAZAN_GAME_DATA;
+      var ASSET_SIDE_IDS = { cur_asset: true, fix_asset: true };
+
+      // רשימת כל הפריטים, לחישוב משוואת המאזן בלי לגעת ב-engine.js.
+      var ALL_ITEMS = [];
+      GAME_DATA.rounds.forEach(function (round) {
+        round.items.forEach(function (item) {
+          ALL_ITEMS.push(item);
+        });
+      });
+
+      var countedIds = {};
+      var assetsTotal = 0;
+      var liabEquityTotal = 0;
+
+      var equationEl = document.getElementById("maazan-equation");
+      var assetsValueEl = document.getElementById("eq-assets-value");
+      var liabValueEl = document.getElementById("eq-liab-value");
+
+      function formatAmount(n) {
+        return n.toLocaleString("he-IL") + " אלפי ₪";
+      }
+
+      function updateDisplay() {
+        assetsValueEl.textContent = formatAmount(assetsTotal);
+        liabValueEl.textContent = formatAmount(liabEquityTotal);
+
+        equationEl.classList.remove("balanced", "unbalanced");
+        if (assetsTotal === 0 && liabEquityTotal === 0) {
+          return; // מצב התחלתי ניטרלי, לפני כל שיבוץ
+        }
+        if (assetsTotal === liabEquityTotal) {
+          equationEl.classList.add("balanced");
+        } else {
+          equationEl.classList.add("unbalanced");
+        }
+      }
+
+      function resetEquation() {
+        countedIds = {};
+        assetsTotal = 0;
+        liabEquityTotal = 0;
+        updateDisplay();
+      }
+
+      function recomputeFromContainer() {
+        // בודקים הכלה (substring) של הטקסט המלא של כל פריט בתוך תוכן קטגוריות
+        // המקום שבו engine.js מציג פריטים ששובצו נכון - במקום לפרק לפי פסיקים,
+        // כי חלק מטקסטי הפריטים מכילים פסיק בתוכם (למשל "..., הנפרעת בעוד שנתיים").
+        var placedGroups = container.querySelectorAll(".category-items");
+        var combinedText = "";
+        placedGroups.forEach(function (group) {
+          combinedText += " || " + group.textContent;
+        });
+
+        ALL_ITEMS.forEach(function (item) {
+          if (countedIds[item.id]) {
+            return;
+          }
+          if (combinedText.indexOf(item.text) !== -1) {
+            countedIds[item.id] = true;
+            if (ASSET_SIDE_IDS[item.answer]) {
+              assetsTotal += item.amount;
+            } else {
+              liabEquityTotal += item.amount;
+            }
+          }
+        });
+        updateDisplay();
+      }
+
+      var container = document.getElementById("maazan-game");
+
+      // לחיצה על "שחקו שוב" מאפסת משחק שלם ב-engine.js, ולכן גם מאפסים כאן.
+      container.addEventListener("click", function (e) {
+        if (e.target && e.target.textContent && e.target.textContent.trim() === "שחקו שוב") {
+          resetEquation();
+        }
+      });
+
+      var observer = new MutationObserver(function () {
+        recomputeFromContainer();
+      });
+      observer.observe(container, { childList: true, subtree: true });
+
+      initGame(GAME_DATA, "maazan-game");
+    })();
+  </script>
+</body>
+</html>

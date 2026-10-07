@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בדיקת מנוע - דמו</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <header class="site-header">
+    <img src="assets/logo.png" alt="לוגו" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+    <strong id="logo-fallback" class="logo-fallback" style="display:none;">משחקי לימוד</strong>
+  </header>
+
+  <div class="game-shell" id="demo-game"></div>
+
+  <script src="assets/engine.js"></script>
+  <script src="data/demo.js"></script>
+  <script>
+    initGame(window.DEMO_GAME_DATA, "demo-game");
+  </script>
+</body>
+</html>

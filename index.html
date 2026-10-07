@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משחקי לימוד</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <header class="site-header">
+    <img src="assets/logo.png" alt="לוגו" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+    <strong id="logo-fallback" class="logo-fallback" style="display:none;">משחקי לימוד</strong>
+  </header>
+
+  <main class="home-main">
+    <h1>משחקי לימוד</h1>
+    <p class="subtitle">בחרו משחק והתחילו ללמוד</p>
+
+    <section class="nickname-section">
+      <label for="nickname">איך קוראים לך?</label>
+      <input id="nickname" type="text" placeholder="הקלידו כינוי" maxlength="20" autocomplete="off">
+    </section>
+
+    <section class="score-bar">
+      <span class="score-label">ניקוד מצטבר</span>
+      <span class="score-value" id="total-score">0</span>
+    </section>
+
+    <section class="games-grid">
+      <button class="game-card pressable" data-game="maazan" type="button">
+        <h3>שבץ את המאזן</h3>
+        <p>מפגש 2 - סיווג סעיפי מאזן, כולל מבחן מסכם</p>
+        <span class="badge">שחקו עכשיו</span>
+      </button>
+
+      <button class="game-card pressable" data-game="game1" type="button">
+        <h3>משחק 1</h3>
+        <p>ייבנה בשלב הבא</p>
+        <span class="badge">בקרוב</span>
+      </button>
+
+      <button class="game-card pressable" data-game="rivchi" type="button">
+        <h3>רווחיות</h3>
+        <p>מפגש 3 - דוח רווח והפסד, חישוב מס וסיווג כרטסות, כולל מבחן מסכם</p>
+        <span class="badge">שחקו עכשיו</span>
+      </button>
+
+      <button class="game-card pressable" data-game="game4" type="button">
+        <h3>משחק 4</h3>
+        <p>ייבנה בשלב הבא</p>
+        <span class="badge">בקרוב</span>
+      </button>
+
+      <button class="game-card pressable" data-game="game5" type="button">
+        <h3>משחק 5</h3>
+        <p>ייבנה בשלב הבא</p>
+        <span class="badge">בקרוב</span>
+      </button>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var NICKNAME_KEY = "learnGames_nickname";
+      var TOTAL_SCORE_KEY = "learnGames_totalScore";
+
+      var nicknameInput = document.getElementById("nickname");
+      try {
+        var savedNickname = localStorage.getItem(NICKNAME_KEY);
+        if (savedNickname) {
+          nicknameInput.value = savedNickname;
+        }
+      } catch (e) {
+        // localStorage לא זמין; מתעלמים בשקט
+      }
+
+      nicknameInput.addEventListener("input", function () {
+        try {
+          localStorage.setItem(NICKNAME_KEY, nicknameInput.value);
+        } catch (e) {
+          // localStorage לא זמין; מתעלמים בשקט
+        }
+      });
+
+      var totalScoreEl = document.getElementById("total-score");
+      try {
+        var total = parseInt(localStorage.getItem(TOTAL_SCORE_KEY) || "0", 10);
+        totalScoreEl.textContent = isNaN(total) ? "0" : String(total);
+      } catch (e) {
+        totalScoreEl.textContent = "0";
+      }
+
+      document.querySelector('[data-game="maazan"]').addEventListener("click", function () {
+        window.location.href = "games/02-maazan.html";
+      });
+
+      document.querySelector('[data-game="rivchi"]').addEventListener("click", function () {
+        window.location.href = "games/03-rivchi.html";
+      });
+
+      ["game1", "game4", "game5"].forEach(function (id) {
+        document.querySelector('[data-game="' + id + '"]').addEventListener("click", function () {
+          alert("המשחק בבנייה - חזרו בקרוב!");
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>רווחיות - מפגש 3</title>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /*
+    עיצוב ייעודי למשחק "רווחיות" בלבד - לא נוגע ב-engine.js ולא ב-assets/style.css.
+    כל המשתנים והכללים כאן מוגדרים תחת .rv-theme (על ה-body של הדף הזה בלבד),
+    כך שהם דורסים את משתני העיצוב המשותפים רק במסמך הזה ולא משפיעים על משחקים אחרים.
+  */
+
+  .rv-theme {
+    --navy-deep: #2E2A4D;
+    --navy-light: #B7A9E8;
+    --gold: #F5A623;
+    --bg-gray: #F6F1FF;
+    --red-error: #E8506B;
+    --rv-violet: #7C6FEF;
+    --rv-coral: #FF8A65;
+    --rv-teal: #2FBFAE;
+    --rv-cream: #FFFBF5;
+    --rv-shadow: rgba(124, 111, 239, 0.18);
+    font-family: "Rubik", "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    background-color: var(--rv-cream);
+    background-image:
+      radial-gradient(620px circle at 88% -8%, rgba(255, 138, 101, 0.22), transparent 60%),
+      radial-gradient(520px circle at -8% 18%, rgba(124, 111, 239, 0.16), transparent 60%),
+      radial-gradient(560px circle at 100% 85%, rgba(47, 191, 174, 0.14), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  .rv-theme .site-header {
+    background: #fff;
+    border-radius: 999px;
+    max-width: 340px;
+    margin: 14px auto;
+    padding: 8px 20px;
+    box-shadow: 0 8px 22px var(--rv-shadow);
+  }
+
+  .rv-theme .logo-fallback {
+    color: var(--rv-violet);
+    font-weight: 700;
+  }
+
+  .rv-theme .screen {
+    background: #fff;
+    border-radius: 26px;
+    padding: 30px 28px;
+    box-shadow: 0 14px 34px var(--rv-shadow);
+    border: 1px solid rgba(124, 111, 239, 0.08);
+  }
+
+  .rv-theme .screen h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 23px;
+    font-weight: 800;
+    color: var(--navy-deep);
+    margin-top: 0;
+    line-height: 1.3;
+  }
+
+  .rv-theme .screen h2::before {
+    content: "";
+    display: inline-block;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--rv-violet);
+    background-image:
+      linear-gradient(135deg, var(--rv-violet), var(--rv-coral)),
+      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><rect x='3' y='12' width='4' height='9'/><rect x='10' y='7' width='4' height='14'/><rect x='17' y='3' width='4' height='18'/></svg>");
+    background-size: cover, 16px 16px;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+  }
+
+  .rv-theme .screen-subtitle {
+    color: var(--navy-deep);
+    opacity: 0.75;
+  }
+
+  .rv-theme .score-line,
+  .rv-theme .level-tag {
+    display: inline-block;
+    background: var(--bg-gray);
+    color: var(--navy-deep);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .rv-theme .btn {
+    border-radius: 999px;
+    border: none;
+    padding: 12px 28px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .rv-theme .btn.btn-primary {
+    background: linear-gradient(135deg, var(--rv-violet), var(--rv-coral));
+    color: #fff;
+    box-shadow: 0 10px 22px var(--rv-shadow);
+  }
+
+  .rv-theme .btn.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px var(--rv-shadow);
+  }
+
+  .rv-theme .btn.btn-secondary {
+    background: #fff;
+    color: var(--rv-violet);
+    border: 2px solid var(--rv-violet);
+  }
+
+  .rv-theme .pressable:active {
+    transform: scale(0.96);
+  }
+
+  .rv-theme .categories {
+    gap: 10px;
+  }
+
+  .rv-theme .category {
+    border-radius: 16px;
+    border: 2px solid var(--rv-violet);
+    background: #fff;
+    color: var(--navy-deep);
+    font-weight: 600;
+    padding: 10px 16px;
+    transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+
+  .rv-theme .category:hover {
+    background: var(--rv-violet);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .rv-theme .item-pile {
+    gap: 10px;
+  }
+
+  .rv-theme .item-card {
+    border-radius: 14px;
+    border: 2px solid var(--bg-gray);
+    background: var(--rv-cream);
+    color: var(--navy-deep);
+    font-weight: 500;
+    padding: 10px 16px;
+  }
+
+  .rv-theme .item-card.selected {
+    border-color: var(--rv-coral);
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(255, 138, 101, 0.3);
+  }
+
+  .rv-theme .feedback-box {
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-weight: 600;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rv-theme .feedback-box.correct {
+    background: rgba(47, 191, 174, 0.12);
+    color: #1B8F7F;
+    border: 1px solid rgba(47, 191, 174, 0.3);
+  }
+
+  .rv-theme .feedback-box.correct::before {
+    content: "";
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--rv-teal);
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12l5 5L20 6'/></svg>");
+    background-size: 13px 13px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .rv-theme .feedback-box.wrong {
+    background: rgba(232, 80, 107, 0.1);
+    color: #C43A54;
+    border: 1px solid rgba(232, 80, 107, 0.25);
+  }
+
+  .rv-theme .feedback-box.wrong::before {
+    content: "";
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--red-error);
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M6 6l12 12M18 6L6 18'/></svg>");
+    background-size: 13px 13px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .rv-theme .top-progress {
+    background: var(--bg-gray);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+  }
+
+  .rv-theme .top-progress-fill {
+    background: linear-gradient(90deg, var(--rv-coral), var(--gold));
+    height: 100%;
+    border-radius: 999px;
+    transition: width 300ms ease;
+  }
+
+  .rv-theme .missed-list {
+    padding-inline-start: 22px;
+  }
+
+  .rv-theme .missed-list li {
+    margin-bottom: 6px;
+    color: var(--navy-deep);
+  }
+
+  .rv-layout {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    gap: 16px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 12px 24px;
+    align-items: flex-start;
+  }
+
+  .rv-action {
+    flex: 1 1 420px;
+    min-width: 280px;
+  }
+
+  .rv-waterfall {
+    flex: 0 0 300px;
+    max-width: 340px;
+    background: #fff;
+    border-radius: 22px;
+    padding: 18px 18px;
+    position: sticky;
+    top: 12px;
+    box-shadow: 0 12px 28px var(--rv-shadow);
+    border: 1px solid rgba(124, 111, 239, 0.08);
+  }
+
+  .rv-wf-head {
+    margin-bottom: 8px;
+  }
+
+  .rv-wf-company {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--navy-deep);
+    font-size: 14px;
+  }
+
+  .rv-wf-company::before {
+    content: "";
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--rv-teal);
+    background-image: linear-gradient(135deg, var(--rv-teal), var(--rv-violet)),
+      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><rect x='3' y='12' width='4' height='9'/><rect x='10' y='7' width='4' height='14'/><rect x='17' y='3' width='4' height='18'/></svg>");
+    background-size: cover, 12px 12px;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+  }
+
+  .rv-wf-note {
+    font-size: 12px;
+    color: var(--navy-deep);
+    opacity: 0.65;
+  }
+
+  .rv-wf-rows,
+  .rv-mini-water {
+    margin-top: 6px;
+  }
+
+  .rv-wf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    color: var(--navy-deep);
+    font-size: 14px;
+  }
+
+  .rv-wf-row.rv-subtotal {
+    border-top: 1px solid var(--navy-light);
+    margin-top: 4px;
+    padding-top: 7px;
+    font-weight: 700;
+  }
+
+  .rv-wf-amount {
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  .rv-wf-row.rv-gold-row .rv-wf-amount,
+  .rv-wf-row.rv-gold-row .rv-wf-label {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  @keyframes rv-flash-gold {
+    0% { background-color: transparent; }
+    30% { background-color: rgba(245, 166, 35, 0.3); }
+    100% { background-color: transparent; }
+  }
+
+  .rv-flash {
+    animation: rv-flash-gold 200ms ease;
+    border-radius: 6px;
+  }
+
+  @keyframes rv-match-flash {
+    0% { background-color: #fff; }
+    30% { background-color: rgba(245, 166, 35, 0.32); }
+    100% { background-color: #fff; }
+  }
+
+  .rv-match-flash {
+    animation: rv-match-flash 500ms ease;
+  }
+
+  @keyframes rv-enter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .rv-enter {
+    animation: rv-enter 180ms ease;
+  }
+
+  @keyframes rv-shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+  }
+
+  .rv-shake {
+    animation: rv-shake 120ms ease;
+    border-color: var(--red-error) !important;
+  }
+
+  @keyframes rv-screen-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .rv-screen-transition {
+    animation: rv-screen-in 200ms ease;
+  }
+
+  .rv-progress-wrap {
+    position: relative;
+    margin-bottom: 10px;
+  }
+
+  .rv-progress-dots {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .rv-progress-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--navy-light);
+    opacity: 0.5;
+    transition: box-shadow 200ms ease;
+  }
+
+  .rv-progress-dot.rv-done {
+    background: var(--gold);
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.22);
+  }
+
+  .rv-mini-cats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .rv-mini-cat {
+    background: linear-gradient(135deg, rgba(124, 111, 239, 0.08), rgba(255, 138, 101, 0.08));
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+
+  .rv-mini-cat-label {
+    font-size: 12px;
+    color: var(--navy-deep);
+    opacity: 0.75;
+  }
+
+  .rv-mini-cat-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy-deep);
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: block;
+  }
+
+  .rv-mini-water {
+    background: var(--bg-gray);
+    border-radius: 14px;
+    padding: 4px 12px;
+  }
+
+  .rv-field-row {
+    margin: 14px 0;
+  }
+
+  .rv-field-row input[type="text"] {
+    width: 100%;
+    max-width: 220px;
+    min-height: 44px;
+    font-size: 16px;
+    padding: 6px 14px;
+    border: 2px solid var(--navy-light);
+    border-radius: 14px;
+    box-sizing: border-box;
+    font-family: inherit;
+    background: var(--rv-cream);
+    color: var(--navy-deep);
+  }
+
+  .rv-field-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--rv-violet);
+    box-shadow: 0 0 0 4px rgba(124, 111, 239, 0.15);
+    background: #fff;
+  }
+
+  .rv-field-error {
+    color: var(--red-error);
+    font-size: 13px;
+    margin-top: 6px;
+    min-height: 18px;
+    font-weight: 600;
+  }
+
+  .rv-hint {
+    color: var(--navy-deep);
+    opacity: 0.75;
+    font-size: 13px;
+    margin-top: 8px;
+    background: var(--bg-gray);
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 10px;
+  }
+
+  .rv-mc-choices,
+  .rv-sentence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .rv-mc-choice,
+  .rv-sentence-item {
+    text-align: right;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 2px solid var(--bg-gray);
+    border-radius: 14px;
+    background: var(--rv-cream);
+    cursor: pointer;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--navy-deep);
+    transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+  }
+
+  .rv-mc-choice:hover,
+  .rv-sentence-item:hover {
+    border-color: var(--rv-violet);
+    background: #fff;
+    transform: translateY(-1px);
+  }
+
+  .rv-exam-counter {
+    display: inline-block;
+    color: var(--rv-violet);
+    background: var(--bg-gray);
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 10px;
+    padding: 5px 14px;
+    border-radius: 999px;
+  }
+
+  .rv-final-score-ring {
+    width: 156px;
+    height: 156px;
+    margin: 6px auto 20px;
+    border-radius: 50%;
+    background: conic-gradient(var(--rv-violet) calc(var(--rv-pct, 0) * 1%), var(--bg-gray) 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 14px 34px var(--rv-shadow);
+  }
+
+  .rv-final-score-inner {
+    width: 124px;
+    height: 124px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--navy-deep);
+  }
+
+  .rv-stage-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .rv-stage-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy-deep);
+    background: var(--bg-gray);
+    padding: 9px 16px;
+    border-radius: 12px;
+  }
+
+  .rv-review-item {
+    border-top: none;
+    background: var(--rv-cream);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .rv-review-prompt {
+    font-weight: 600;
+    color: var(--navy-deep);
+    margin-bottom: 4px;
+  }
+
+  .rv-review-status.rv-ok {
+    color: #1B8F7F;
+    font-weight: 700;
+  }
+
+  .rv-review-status.rv-bad {
+    color: var(--red-error);
+    font-weight: 700;
+  }
+
+  .rv-review-explain {
+    font-size: 13px;
+    color: var(--navy-deep);
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  .rv-review-note {
+    font-size: 12px;
+    color: var(--navy-deep);
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  .rv-missed-heading {
+    margin-top: 18px;
+    font-weight: 700;
+    color: var(--navy-deep);
+  }
+
+  .rv-form-warning {
+    color: var(--red-error);
+    font-weight: 600;
+    padding: 10px 16px;
+    background: rgba(232, 80, 107, 0.1);
+    border-radius: 12px;
+  }
+
+  @media (max-width: 780px) {
+    .rv-layout {
+      flex-direction: column;
+    }
+    .rv-waterfall {
+      flex: 0 0 auto; /* בעמודה, flex-basis של 300px הפך לגובה קבוע ויצר קופסה ריקה גדולה במובייל */
+      position: static;
+      max-width: none;
+      width: 100%;
+      padding: 14px 16px;
+    }
+    .rv-wf-row {
+      font-size: 13px;
+      padding: 3px 0;
+    }
+  }
+</style>
+</head>
+<body class="rv-theme">
+  <!--
+    ====================================================================
+    הגדרות טופס Google - למילוי ידני בלבד. שלושת השדות הבאים חובה למלא
+    לפני שהכפתור "שלח את התוצאה" יעבוד. עד אז מוצגת הודעת אזהרה במקומו.
+    ====================================================================
+  -->
+  <script>
+    var FORM = {
+      base:  "https://docs.google.com/forms/d/e/1FAIpQLSeoOCQo2pWTJ2m_T0GdJJk18oCZ9WtXe83QkYGXR_hF0K6IMA/viewform",
+      name:  "entry.2065594307",
+      game:  "entry.465379463",
+      score: "entry.2059558760"
+    };
+  </script>
+
+  <header class="site-header">
+    <img src="../assets/logo.png" alt="לוגו" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+    <strong id="logo-fallback" class="logo-fallback" style="display:none;">משחקי לימוד</strong>
+    <a href="../index.html" class="home-link" style="margin-inline-start:auto;font-weight:600;color:inherit;text-decoration:none;white-space:nowrap;">חזרה למשחקים</a>
+  </header>
+
+  <div class="rv-layout">
+    <aside class="rv-waterfall" id="rv-waterfall">
+      <div class="rv-wf-head">
+        <div class="rv-wf-company">רשת מזון הצפון בע"מ · 2025</div>
+        <div class="rv-wf-note">כל הסכומים במיליוני ש"ח</div>
+      </div>
+      <div class="rv-wf-rows" id="rv-wf-rows"></div>
+    </aside>
+
+    <main class="rv-action">
+      <div id="rv-content"></div>
+    </main>
+  </div>
+
+  <script src="../data/03-rivchi.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var DATA = window.RIVCHI_GAME_DATA;
+    var TAX_RATE = DATA.taxRate;
+
+    var contentEl = document.getElementById("rv-content");
+    var wfRowsEl = document.getElementById("rv-wf-rows");
+    var wfPanelEl = document.getElementById("rv-waterfall");
+
+    var state = {
+      waterfall: {},
+      scores: { s1: 0, s2: 0, s3: 0, s4: 0 },
+      maxScores: {
+        s1: DATA.stage1Items.length * 10,
+        s2: DATA.stage2Questions.length * 20,
+        s3: DATA.stage3Items.length * 10,
+        s4: 100
+      },
+      missed: {},
+      stage1: null,
+      stage2: null,
+      stage3: null,
+      stage4: null
+    };
+
+    // ----- אתחול המפל -----
+    DATA.stage1Items.forEach(function (item) {
+      state.waterfall[item.id] = {
+        label: item.text,
+        amount: item.amount,
+        order: item.order,
+        revealed: false,
+        isSubtotal: item.answer === "subtotal"
+      };
+    });
+    state.waterfall[DATA.taxRow.id] = {
+      label: DATA.taxRow.text,
+      amount: DATA.taxRow.amount,
+      order: DATA.taxRow.order,
+      revealed: false,
+      isSubtotal: false
+    };
+    state.waterfall[DATA.netIncomeRow.id] = {
+      label: DATA.netIncomeRow.text,
+      amount: DATA.netIncomeRow.amount,
+      order: DATA.netIncomeRow.order,
+      revealed: false,
+      isSubtotal: true,
+      gold: true
+    };
+
+    function fmt(n) {
+      return Number(n).toLocaleString("he-IL");
+    }
+
+    function el(tag, className) {
+      var node = document.createElement(tag);
+      if (className) {
+        node.className = className;
+      }
+      return node;
+    }
+
+    function shuffle(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      return arr;
+    }
+
+    function clearContent() {
+      contentEl.innerHTML = "";
+    }
+
+    function screenWrap() {
+      var screen = el("div", "screen rv-screen-transition");
+      contentEl.appendChild(screen);
+      return screen;
+    }
+
+    function addMissed(explain) {
+      if (!explain) {
+        return;
+      }
+      state.missed[explain] = (state.missed[explain] || 0) + 1;
+    }
+
+    function parseNumber(raw, isPercent) {
+      if (raw === null || raw === undefined) {
+        return NaN;
+      }
+      var s = String(raw).trim();
+      if (!s) {
+        return NaN;
+      }
+      s = s.replace(/,/g, ".");
+      var hasPercent = s.indexOf("%") !== -1;
+      s = s.replace(/%/g, "").trim();
+      var num = parseFloat(s);
+      if (isNaN(num)) {
+        return NaN;
+      }
+      if (isPercent && !hasPercent && num > 0 && num <= 1) {
+        num = num * 100;
+      }
+      return num;
+    }
+
+    // ----- מפל צד -----
+    function renderWaterfallPanel(enterIds) {
+      wfRowsEl.innerHTML = "";
+      var rows = Object.keys(state.waterfall)
+        .map(function (id) { return Object.assign({ id: id }, state.waterfall[id]); })
+        .filter(function (r) { return r.revealed; })
+        .sort(function (a, b) { return a.order - b.order; });
+
+      rows.forEach(function (row) {
+        var rowEl = el("div", "rv-wf-row" + (row.isSubtotal ? " rv-subtotal" : "") + (row.gold ? " rv-gold-row" : ""));
+        if (enterIds && enterIds.indexOf(row.id) !== -1) {
+          rowEl.className += " rv-enter";
+        }
+        var labelEl = el("span", "rv-wf-label");
+        labelEl.textContent = row.label;
+        var amountEl = el("span", "rv-wf-amount");
+        amountEl.textContent = fmt(row.amount);
+        rowEl.appendChild(labelEl);
+        rowEl.appendChild(amountEl);
+        wfRowsEl.appendChild(rowEl);
+      });
+    }
+
+    function flashMatch() {
+      wfPanelEl.classList.remove("rv-match-flash");
+      // force reflow so the animation can restart
+      void wfPanelEl.offsetWidth;
+      wfPanelEl.classList.add("rv-match-flash");
+    }
+
+    // ----- פס התקדמות -----
+    function buildProgressBar(stageNum, fraction) {
+      var completed = stageNum - 1;
+      var overall = (completed + (fraction || 0)) / 4;
+      overall = Math.max(0, Math.min(1, overall));
+
+      var wrap = el("div", "rv-progress-wrap");
+      var track = el("div", "top-progress");
+      var fill = el("div", "top-progress-fill");
+      fill.style.width = Math.round(overall * 100) + "%";
+      track.appendChild(fill);
+      wrap.appendChild(track);
+
+      var dots = el("div", "rv-progress-dots");
+      for (var i = 1; i <= 4; i++) {
+        var dot = el("span", "rv-progress-dot" + (completed >= i ? " rv-done" : ""));
+        dots.appendChild(dot);
+      }
+      wrap.appendChild(dots);
+      return wrap;
+    }
+
+    // ===================================================================
+    // מסך פתיחה
+    // ===================================================================
+    function renderIntro() {
+      clearContent();
+      var screen = screenWrap();
+
+      var h2 = el("h2");
+      h2.textContent = DATA.meta.title;
+      screen.appendChild(h2);
+
+      var sub = el("p", "screen-subtitle");
+      sub.textContent = "רשת מזון הצפון בע\"מ, שנת 2025. ארבעה שלבים רצופים - סיווג דוח, חישוב, סיווג כרטסות ומבחן מסכם.";
+      screen.appendChild(sub);
+
+      var startBtn = el("button", "btn btn-primary pressable");
+      startBtn.textContent = "התחילו";
+      startBtn.addEventListener("click", function () {
+        startStage1();
+      });
+      screen.appendChild(startBtn);
+    }
+
+    // ===================================================================
+    // שלב 1: סיווג שורות הדוח
+    // ===================================================================
+    function startStage1() {
+      state.stage1 = {
+        pile: shuffle(DATA.stage1Items.slice()),
+        selectedId: null,
+        wrongCounts: {},
+        lastFeedback: null,
+        shakeId: null
+      };
+      renderStage1();
+    }
+
+    function renderStage1() {
+      clearContent();
+      var s1 = state.stage1;
+      var totalItems = DATA.stage1Items.length;
+      var doneItems = totalItems - s1.pile.length;
+
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(1, doneItems / totalItems));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב 1: סיווג שורות דוח רווח והפסד";
+      screen.appendChild(h2);
+
+      var sub = el("p", "screen-subtitle");
+      sub.textContent = "בחרו שורה מהערימה, ואז בחרו את הקטגוריה המתאימה לה.";
+      screen.appendChild(sub);
+
+      var scoreLine = el("div", "score-line");
+      scoreLine.textContent = "ניקוד שלב זה: " + state.scores.s1;
+      screen.appendChild(scoreLine);
+
+      if (s1.lastFeedback) {
+        screen.appendChild(buildFeedbackBox(s1.lastFeedback));
+      }
+
+      var categoriesWrap = el("div", "categories");
+      DATA.stage1Categories.forEach(function (cat) {
+        var catBtn = el("button", "category pressable");
+        catBtn.textContent = cat.label;
+        catBtn.addEventListener("click", function () {
+          attemptStage1Placement(cat.id);
+        });
+        categoriesWrap.appendChild(catBtn);
+      });
+      screen.appendChild(categoriesWrap);
+
+      var pileWrap = el("div", "item-pile");
+      s1.pile.forEach(function (item) {
+        var itemBtn = el("button", "item-card pressable");
+        if (item.id === s1.selectedId) {
+          itemBtn.className += " selected";
+        }
+        if (item.id === s1.shakeId) {
+          itemBtn.className += " rv-shake";
+        }
+        itemBtn.textContent = item.text;
+        itemBtn.addEventListener("click", function () {
+          selectStage1Item(item.id);
+        });
+        pileWrap.appendChild(itemBtn);
+      });
+      screen.appendChild(pileWrap);
+    }
+
+    function selectStage1Item(itemId) {
+      var s1 = state.stage1;
+      s1.selectedId = s1.selectedId === itemId ? null : itemId;
+      s1.shakeId = null;
+      renderStage1();
+    }
+
+    function attemptStage1Placement(categoryId) {
+      var s1 = state.stage1;
+      if (!s1.selectedId) {
+        return;
+      }
+      var item = DATA.stage1Items.filter(function (i) { return i.id === s1.selectedId; })[0];
+
+      if (item.answer === categoryId) {
+        var firstTry = !s1.wrongCounts[item.id];
+        var points = firstTry ? 10 : 4;
+        state.scores.s1 += points;
+        s1.pile = s1.pile.filter(function (i) { return i.id !== item.id; });
+        s1.selectedId = null;
+        s1.lastFeedback = { type: "correct", points: points };
+        state.waterfall[item.id].revealed = true;
+        renderWaterfallPanel([item.id]);
+
+        if (s1.pile.length === 0) {
+          renderStage1();
+          window.setTimeout(function () { renderBetween(1, startStage2); }, 500);
+          return;
+        }
+        renderStage1();
+      } else {
+        s1.wrongCounts[item.id] = (s1.wrongCounts[item.id] || 0) + 1;
+        addMissed(item.explain);
+        s1.selectedId = null;
+        s1.shakeId = item.id;
+        s1.lastFeedback = { type: "wrong", explain: item.explain };
+        renderStage1();
+        window.setTimeout(function () { s1.shakeId = null; }, 150);
+      }
+    }
+
+    function buildFeedbackBox(feedback) {
+      if (feedback.type === "correct") {
+        var okBox = el("div", "feedback-box correct");
+        okBox.textContent = "נכון! קיבלת " + feedback.points + " נקודות.";
+        return okBox;
+      }
+      var wrongBox = el("div", "feedback-box wrong");
+      wrongBox.textContent = feedback.explain || "לא נכון, נסו שוב.";
+      return wrongBox;
+    }
+
+    // ===================================================================
+    // מסך מעבר גנרי
+    // ===================================================================
+    function renderBetween(stageNum, nextFn) {
+      clearContent();
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(stageNum + 1, 0));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב " + stageNum + " הושלם!";
+      screen.appendChild(h2);
+
+      var scoreKey = "s" + stageNum;
+      var scoreLine = el("div", "score-line");
+      scoreLine.textContent = "ניקוד בשלב: " + state.scores[scoreKey] + " מתוך " + state.maxScores[scoreKey];
+      screen.appendChild(scoreLine);
+
+      var nextBtn = el("button", "btn btn-primary pressable");
+      nextBtn.textContent = "לשלב הבא";
+      nextBtn.addEventListener("click", nextFn);
+      screen.appendChild(nextBtn);
+    }
+
+    // ===================================================================
+    // שלב 2: שלוש שאלות חישוב
+    // ===================================================================
+    function startStage2() {
+      state.stage2 = { index: 0, attempts: 0, feedback: null };
+      renderStage2();
+    }
+
+    function renderStage2() {
+      clearContent();
+      var s2 = state.stage2;
+      var q = DATA.stage2Questions[s2.index];
+
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(2, s2.index / DATA.stage2Questions.length));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב 2: שאלת חישוב " + (s2.index + 1) + " מתוך " + DATA.stage2Questions.length;
+      screen.appendChild(h2);
+
+      if (q.preface) {
+        var preface = el("p", "screen-subtitle");
+        preface.textContent = q.preface;
+        screen.appendChild(preface);
+      }
+
+      var prompt = el("p");
+      prompt.textContent = q.prompt;
+      screen.appendChild(prompt);
+
+      if (s2.feedback) {
+        screen.appendChild(buildFeedbackBox(s2.feedback));
+
+        if (s2.feedback.type === "correct" || s2.feedback.type === "reveal") {
+          var contBtn = el("button", "btn btn-primary pressable");
+          contBtn.textContent = "המשך";
+          contBtn.addEventListener("click", advanceStage2);
+          screen.appendChild(contBtn);
+        } else {
+          appendStage2Input(screen, q, s2);
+        }
+        return;
+      }
+
+      appendStage2Input(screen, q, s2);
+    }
+
+    function appendStage2Input(screen, q, s2) {
+      var row = el("div", "rv-field-row");
+      var input = el("input");
+      input.type = "text";
+      input.inputMode = "decimal";
+      row.appendChild(input);
+
+      var errorLine = el("div", "rv-field-error");
+      errorLine.textContent = "";
+      row.appendChild(errorLine);
+
+      input.addEventListener("input", function () {
+        if (errorLine.textContent) {
+          errorLine.textContent = "";
+        }
+      });
+
+      screen.appendChild(row);
+
+      if (s2.attempts >= 1 && q.hint) {
+        var hint = el("p", "rv-hint");
+        hint.textContent = "רמז: " + q.hint;
+        screen.appendChild(hint);
+      }
+
+      var checkBtn = el("button", "btn btn-primary pressable");
+      checkBtn.textContent = "בדיקה";
+      checkBtn.addEventListener("click", function () {
+        checkStage2Answer(q, input.value, errorLine);
+      });
+      screen.appendChild(checkBtn);
+
+      input.focus();
+    }
+
+    function checkStage2Answer(q, rawValue, errorLine) {
+      var s2 = state.stage2;
+      if (!rawValue || !rawValue.trim()) {
+        errorLine.textContent = "יש להזין תשובה.";
+        return;
+      }
+      var parsed = parseNumber(rawValue, q.isPercent);
+      if (isNaN(parsed)) {
+        errorLine.textContent = "נא להזין מספר תקין.";
+        return;
+      }
+
+      var correct = Math.abs(parsed - q.answer) <= q.tolerance;
+
+      if (correct) {
+        var pointsTable = [20, 10, 5];
+        var points = pointsTable[Math.min(s2.attempts, 2)];
+        state.scores.s2 += points;
+        s2.feedback = { type: "correct", points: points, explain: q.explain };
+        renderStage2WithExplain(q, points);
+        if (q.id === "q1") {
+          revealTaxAndNet();
+        }
+      } else {
+        s2.attempts++;
+        addMissed(q.explain);
+        if (s2.attempts >= 3) {
+          s2.feedback = { type: "reveal", explain: "התשובה הנכונה: " + q.answer + (q.isPercent ? "%" : "") + ". " + q.explain };
+          renderStage2();
+        } else {
+          s2.feedback = null;
+          renderStage2();
+          markLastInputWrong();
+        }
+      }
+    }
+
+    function markLastInputWrong() {
+      var input = contentEl.querySelector("input[type='text']");
+      if (input) {
+        input.className = "rv-shake";
+        window.setTimeout(function () { input.className = ""; }, 150);
+      }
+    }
+
+    function renderStage2WithExplain(q, points) {
+      clearContent();
+      var s2 = state.stage2;
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(2, s2.index / DATA.stage2Questions.length));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב 2: שאלת חישוב " + (s2.index + 1) + " מתוך " + DATA.stage2Questions.length;
+      screen.appendChild(h2);
+
+      if (q.preface) {
+        var preface = el("p", "screen-subtitle");
+        preface.textContent = q.preface;
+        screen.appendChild(preface);
+      }
+
+      var prompt = el("p");
+      prompt.textContent = q.prompt;
+      screen.appendChild(prompt);
+
+      var okBox = el("div", "feedback-box correct");
+      okBox.textContent = "נכון! קיבלת " + points + " נקודות. " + q.explain;
+      screen.appendChild(okBox);
+
+      if (q.id === "q1") {
+        var revealNote = el("p", "rv-hint");
+        revealNote.id = "rv-reveal-note";
+        revealNote.style.display = "none";
+        revealNote.textContent = q.revealNote;
+        screen.appendChild(revealNote);
+      }
+
+      var contBtn = el("button", "btn btn-primary pressable");
+      contBtn.textContent = "המשך";
+      contBtn.addEventListener("click", advanceStage2);
+      screen.appendChild(contBtn);
+    }
+
+    function revealTaxAndNet() {
+      state.waterfall[DATA.taxRow.id].revealed = true;
+      renderWaterfallPanel([DATA.taxRow.id]);
+      window.setTimeout(function () {
+        state.waterfall[DATA.netIncomeRow.id].revealed = true;
+        renderWaterfallPanel([DATA.netIncomeRow.id]);
+        var note = document.getElementById("rv-reveal-note");
+        if (note) {
+          note.style.display = "block";
+        }
+      }, 200);
+    }
+
+    function advanceStage2() {
+      var s2 = state.stage2;
+      s2.index++;
+      s2.attempts = 0;
+      s2.feedback = null;
+      if (s2.index >= DATA.stage2Questions.length) {
+        renderBetween(2, startStage3);
+      } else {
+        renderStage2();
+      }
+    }
+
+    // ===================================================================
+    // שלב 3: סיווג כרטסות
+    // ===================================================================
+    function startStage3() {
+      state.stage3 = {
+        pile: shuffle(DATA.stage3Items.slice()),
+        placedIds: {},
+        selectedId: null,
+        wrongCounts: {},
+        lastFeedback: null,
+        shakeId: null,
+        totals: { cogs: 0, sm: 0, ga: 0, fin: 0 },
+        justUpdated: false
+      };
+      renderStage3();
+    }
+
+    function computeStage3Waterfall(totals) {
+      var revenue = DATA.revenue;
+      var gross = revenue - totals.cogs;
+      var operating = gross - totals.sm - totals.ga;
+      var pretax = operating - totals.fin;
+      var tax = pretax * TAX_RATE;
+      var net = pretax - tax;
+      return { gross: gross, operating: operating, pretax: pretax, tax: tax, net: net };
+    }
+
+    function renderStage3() {
+      clearContent();
+      var s3 = state.stage3;
+      var totalItems = DATA.stage3Items.length;
+      var doneItems = totalItems - s3.pile.length;
+
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(3, doneItems / totalItems));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב 3: סיווג כרטסות הוצאה";
+      screen.appendChild(h2);
+
+      var sub = el("p", "screen-subtitle");
+      sub.textContent = "שבצו כל כרטסת לסעיף המתאים בדוח. הסכומים בסעיפים ובמפל מתעדכנים בזמן אמת.";
+      screen.appendChild(sub);
+
+      var scoreLine = el("div", "score-line");
+      scoreLine.textContent = "ניקוד שלב זה: " + state.scores.s3;
+      screen.appendChild(scoreLine);
+
+      if (s3.lastFeedback) {
+        screen.appendChild(buildFeedbackBox(s3.lastFeedback));
+      }
+
+      var categoriesWrap = el("div", "categories");
+      DATA.stage3Categories.forEach(function (cat) {
+        var catBtn = el("button", "category pressable");
+        catBtn.textContent = cat.label;
+        catBtn.addEventListener("click", function () {
+          attemptStage3Placement(cat.id);
+        });
+        categoriesWrap.appendChild(catBtn);
+      });
+      screen.appendChild(categoriesWrap);
+
+      var miniCats = el("div", "rv-mini-cats");
+      DATA.stage3Categories.forEach(function (cat) {
+        var box = el("div", "rv-mini-cat");
+        var label = el("span", "rv-mini-cat-label");
+        label.textContent = cat.label;
+        var amount = el("span", "rv-mini-cat-amount");
+        amount.id = "rv-mini-cat-" + cat.id;
+        amount.textContent = fmt(s3.totals[cat.id]);
+        if (s3.justUpdated) {
+          amount.className += " rv-flash";
+        }
+        box.appendChild(label);
+        box.appendChild(amount);
+        miniCats.appendChild(box);
+      });
+      screen.appendChild(miniCats);
+
+      var water = computeStage3Waterfall(s3.totals);
+      var miniWater = el("div", "rv-mini-water");
+      [
+        ["רווח גולמי", water.gross],
+        ["רווח תפעולי", water.operating],
+        ["רווח לפני מס", water.pretax],
+        ["מסים על ההכנסה", water.tax],
+        ["רווח נקי", water.net]
+      ].forEach(function (pair) {
+        var row = el("div", "rv-wf-row");
+        var label = el("span", "rv-wf-label");
+        label.textContent = pair[0];
+        var val = el("span", "rv-wf-amount");
+        val.textContent = fmt(Math.round(pair[1] * 100) / 100);
+        if (s3.justUpdated) {
+          val.className += " rv-flash";
+        }
+        row.appendChild(label);
+        row.appendChild(val);
+        miniWater.appendChild(row);
+      });
+      screen.appendChild(miniWater);
+
+      var pileWrap = el("div", "item-pile");
+      s3.pile.forEach(function (item) {
+        var itemBtn = el("button", "item-card pressable");
+        if (item.id === s3.selectedId) {
+          itemBtn.className += " selected";
+        }
+        if (item.id === s3.shakeId) {
+          itemBtn.className += " rv-shake";
+        }
+        itemBtn.textContent = item.text + " (" + fmt(item.amount) + ")";
+        itemBtn.addEventListener("click", function () {
+          selectStage3Item(item.id);
+        });
+        pileWrap.appendChild(itemBtn);
+      });
+      screen.appendChild(pileWrap);
+    }
+
+    function selectStage3Item(itemId) {
+      var s3 = state.stage3;
+      s3.selectedId = s3.selectedId === itemId ? null : itemId;
+      s3.shakeId = null;
+      renderStage3();
+    }
+
+    function attemptStage3Placement(categoryId) {
+      var s3 = state.stage3;
+      if (!s3.selectedId) {
+        return;
+      }
+      var item = DATA.stage3Items.filter(function (i) { return i.id === s3.selectedId; })[0];
+
+      if (item.answer === categoryId) {
+        var firstTry = !s3.wrongCounts[item.id];
+        var points = firstTry ? 10 : 4;
+        state.scores.s3 += points;
+        s3.pile = s3.pile.filter(function (i) { return i.id !== item.id; });
+        s3.totals[categoryId] += item.amount;
+        s3.selectedId = null;
+        s3.lastFeedback = { type: "correct", points: points };
+        s3.justUpdated = true;
+
+        if (s3.pile.length === 0) {
+          renderStage3();
+          flashMatch();
+          window.setTimeout(function () { renderBetween(3, startStage4); }, 700);
+          return;
+        }
+        renderStage3();
+        s3.justUpdated = false;
+      } else {
+        s3.wrongCounts[item.id] = (s3.wrongCounts[item.id] || 0) + 1;
+        addMissed(item.explain);
+        s3.selectedId = null;
+        s3.shakeId = item.id;
+        s3.lastFeedback = { type: "wrong", explain: item.explain };
+        renderStage3();
+        window.setTimeout(function () { s3.shakeId = null; }, 150);
+      }
+    }
+
+    // ===================================================================
+    // שלב 4: מבחן מסכם
+    // ===================================================================
+    function startStage4() {
+      state.stage4 = { index: 0, results: [] };
+      renderStage4();
+    }
+
+    function renderStage4() {
+      clearContent();
+      var s4 = state.stage4;
+      var q = DATA.stage4Questions[s4.index];
+
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(4, s4.index / DATA.stage4Questions.length));
+
+      var h2 = el("h2");
+      h2.textContent = "שלב 4: מבחן מסכם";
+      screen.appendChild(h2);
+
+      var counter = el("div", "rv-exam-counter");
+      counter.textContent = "שאלה " + (s4.index + 1) + " מתוך " + DATA.stage4Questions.length;
+      screen.appendChild(counter);
+
+      var prompt = el("p");
+      prompt.textContent = q.prompt;
+      screen.appendChild(prompt);
+
+      if (q.type === "classify") {
+        var categoriesWrap = el("div", "categories");
+        DATA.stage3Categories.forEach(function (cat) {
+          var catBtn = el("button", "category pressable");
+          catBtn.textContent = cat.label;
+          catBtn.addEventListener("click", function () {
+            recordStage4Answer(q, cat.id === q.correct);
+          });
+          categoriesWrap.appendChild(catBtn);
+        });
+        screen.appendChild(categoriesWrap);
+      } else if (q.type === "calc") {
+        var row = el("div", "rv-field-row");
+        var input = el("input");
+        input.type = "text";
+        input.inputMode = "decimal";
+        row.appendChild(input);
+
+        var errorLine = el("div", "rv-field-error");
+        errorLine.textContent = "";
+        row.appendChild(errorLine);
+
+        input.addEventListener("input", function () {
+          if (errorLine.textContent) {
+            errorLine.textContent = "";
+          }
+        });
+        screen.appendChild(row);
+
+        var checkBtn = el("button", "btn btn-primary pressable");
+        checkBtn.textContent = "המשך";
+        checkBtn.addEventListener("click", function () {
+          if (!input.value || !input.value.trim()) {
+            errorLine.textContent = "יש להזין תשובה.";
+            return;
+          }
+          var parsed = parseNumber(input.value, q.isPercent);
+          if (isNaN(parsed)) {
+            errorLine.textContent = "נא להזין מספר תקין.";
+            return;
+          }
+          var correct = Math.abs(parsed - q.correct) <= q.tolerance;
+          recordStage4Answer(q, correct);
+        });
+        screen.appendChild(checkBtn);
+        input.focus();
+      } else if (q.type === "mc") {
+        var mcWrap = el("div", "rv-mc-choices");
+        q.choices.forEach(function (choiceText, idx) {
+          var choiceBtn = el("button", "rv-mc-choice pressable");
+          choiceBtn.textContent = choiceText;
+          choiceBtn.addEventListener("click", function () {
+            recordStage4Answer(q, idx === q.correctIndex);
+          });
+          mcWrap.appendChild(choiceBtn);
+        });
+        screen.appendChild(mcWrap);
+      } else if (q.type === "sentence") {
+        var sentWrap = el("div", "rv-sentence-list");
+        q.sentences.forEach(function (sentenceText, idx) {
+          var sentBtn = el("button", "rv-sentence-item pressable");
+          sentBtn.textContent = sentenceText;
+          sentBtn.addEventListener("click", function () {
+            recordStage4Answer(q, idx === q.correctIndex);
+          });
+          sentWrap.appendChild(sentBtn);
+        });
+        screen.appendChild(sentWrap);
+      }
+    }
+
+    function recordStage4Answer(q, isCorrect) {
+      var s4 = state.stage4;
+      s4.results.push({
+        id: q.id,
+        prompt: q.prompt,
+        correct: isCorrect,
+        explain: q.explain,
+        note: q.note || null
+      });
+      s4.index++;
+      if (s4.index >= DATA.stage4Questions.length) {
+        state.scores.s4 = s4.results.filter(function (r) { return r.correct; }).length * 12.5;
+        renderResults();
+      } else {
+        renderStage4();
+      }
+    }
+
+    // ===================================================================
+    // מסך סיום
+    // ===================================================================
+    function renderResults() {
+      clearContent();
+      var screen = screenWrap();
+      screen.appendChild(buildProgressBar(5, 0));
+
+      var h2 = el("h2");
+      h2.textContent = "סיימתם את המשחק!";
+      screen.appendChild(h2);
+
+      var p1 = (state.scores.s1 / state.maxScores.s1) * 100;
+      var p2 = (state.scores.s2 / state.maxScores.s2) * 100;
+      var p3 = (state.scores.s3 / state.maxScores.s3) * 100;
+      var p4 = (state.scores.s4 / state.maxScores.s4) * 100;
+      var final = Math.round(0.2 * p1 + 0.2 * p2 + 0.3 * p3 + 0.3 * p4);
+
+      var ring = el("div", "rv-final-score-ring");
+      ring.style.setProperty("--rv-pct", String(final));
+      var ringInner = el("div", "rv-final-score-inner");
+      ringInner.textContent = final + "%";
+      ring.appendChild(ringInner);
+      screen.appendChild(ring);
+
+      var breakdown = el("div", "rv-stage-breakdown");
+      [
+        ["שלב 1 - סיווג הדוח", p1],
+        ["שלב 2 - שאלות חישוב", p2],
+        ["שלב 3 - סיווג כרטסות", p3],
+        ["שלב 4 - מבחן מסכם", p4]
+      ].forEach(function (pair) {
+        var row = el("div", "rv-stage-breakdown-row");
+        var label = el("span");
+        label.textContent = pair[0];
+        var val = el("span");
+        val.textContent = Math.round(pair[1]) + "%";
+        row.appendChild(label);
+        row.appendChild(val);
+        breakdown.appendChild(row);
+      });
+      screen.appendChild(breakdown);
+
+      var reviewHeading = el("p", "screen-subtitle");
+      reviewHeading.textContent = "סקירת המבחן המסכם:";
+      screen.appendChild(reviewHeading);
+
+      state.stage4.results.forEach(function (r) {
+        var item = el("div", "rv-review-item");
+        var promptLine = el("div", "rv-review-prompt");
+        promptLine.textContent = r.prompt;
+        item.appendChild(promptLine);
+
+        var status = el("div", "rv-review-status " + (r.correct ? "rv-ok" : "rv-bad"));
+        status.textContent = r.correct ? "נכון" : "לא נכון";
+        item.appendChild(status);
+
+        var explainLine = el("div", "rv-review-explain");
+        explainLine.textContent = r.explain;
+        item.appendChild(explainLine);
+
+        if (r.note) {
+          var noteLine = el("div", "rv-review-note");
+          noteLine.textContent = r.note;
+          item.appendChild(noteLine);
+        }
+
+        screen.appendChild(item);
+      });
+
+      var topMissed = Object.keys(state.missed)
+        .map(function (explain) { return { explain: explain, count: state.missed[explain] }; })
+        .sort(function (a, b) { return b.count - a.count; })
+        .slice(0, 3);
+
+      if (topMissed.length) {
+        var missedHeading = el("p", "rv-missed-heading");
+        missedHeading.textContent = "הדברים שהכי כדאי לחזור עליהם:";
+        screen.appendChild(missedHeading);
+
+        var list = el("ul", "missed-list");
+        topMissed.forEach(function (entry) {
+          var li = el("li");
+          li.textContent = entry.explain;
+          list.appendChild(li);
+        });
+        screen.appendChild(list);
+      }
+
+      screen.appendChild(buildSubmitSection(final));
+    }
+
+    function buildSubmitSection(finalScore) {
+      var wrap = el("div", "screen-actions");
+
+      var placeholderUsed = !FORM.base || FORM.base.indexOf("PASTE_FORM_URL_HERE") !== -1;
+      if (placeholderUsed) {
+        var warning = el("p", "rv-form-warning");
+        warning.textContent = "הטופס טרם הוגדר.";
+        wrap.appendChild(warning);
+        return wrap;
+      }
+
+      var submitBtn = el("button", "btn btn-primary pressable");
+      submitBtn.textContent = "שלח את התוצאה";
+      submitBtn.addEventListener("click", function () {
+        var values = {};
+        values[FORM.game] = DATA.meta.title;
+        values[FORM.score] = String(finalScore);
+
+        var params = ["usp=pp_url"];
+        Object.keys(values).forEach(function (key) {
+          params.push(key + "=" + encodeURIComponent(values[key]));
+        });
+
+        var url = FORM.base + "?" + params.join("&");
+        window.open(url, "_blank");
+        if (!wrap.querySelector(".rv-manual-link")) {
+          var manualLink = el("a", "btn btn-secondary pressable rv-manual-link");
+          manualLink.textContent = "הטופס לא נפתח? לחצו כאן";
+          manualLink.href = url;
+          manualLink.target = "_blank";
+          manualLink.rel = "noopener";
+          wrap.appendChild(manualLink);
+        }
+      });
+      wrap.appendChild(submitBtn);
+      return wrap;
+    }
+
+    // ----- הפעלה -----
+    renderWaterfallPanel();
+    renderIntro();
+  })();
+  </script>
+</body>
+</html>
