@@ -1,0 +1,39 @@
+name: publish-site
+# Unpacks the uploaded site bundle (_upload/*.b64 parts) into the repo root,
+# then mirrors main to the gh-pages branch, which GitHub Pages serves.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Unpack uploaded bundle
+        run: |
+          set -e
+          if [ ! -f _upload/MANIFEST ]; then echo "no bundle to unpack"; exit 0; fi
+          cd _upload
+          sha256sum -c MANIFEST
+          cat $(awk '{print $2}' MANIFEST) | base64 -d > ../bundle.tar.xz
+          cd ..
+          echo "5aa118fb959fa367b9f8f5692726a6272f4b57422230df4c143a9f685985d566  bundle.tar.xz" | sha256sum -c -
+          tar -xJf bundle.tar.xz
+          rm bundle.tar.xz
+          cp assets/logo.png assets/logo.png.jpeg
+          git rm -rq _upload
+          git add -A
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Unpack lesson 1 site files"
+          git push origin HEAD:main
+      - name: Mirror main to gh-pages
+        run: git push --force origin HEAD:refs/heads/gh-pages
