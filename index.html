@@ -40,6 +40,12 @@
         <p>מאזן - החלטות מהחיים של עסק קטן: כן, לא או תלוי? עם עזרה מה-AI</p>
         <span class="badge">שחקו עכשיו</span>
       </button>
+
+      <button class="game-card pressable" data-game="tazrim" type="button">
+        <h3>משחק 3 - תזרים מזומנים</h3>
+        <p>יש רווח, אבל איפה הכסף? קריאת דוח תזרים מזומנים והחלטות להנהלה</p>
+        <span class="badge">שחקו עכשיו</span>
+      </button>
     </section>
   </main>
 
@@ -82,7 +88,12 @@
         window.location.href = "games/04-hachlata.html";
       });
 
+      document.querySelector('[data-game="tazrim"]').addEventListener("click", function () {
+        window.location.href = "games/05-tazrim.html";
+      });
+
     })();
   </script>
 </body>
 </html>
+
